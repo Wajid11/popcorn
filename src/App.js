@@ -64,16 +64,37 @@ const average = (arr) =>
     const [movies, setMovies] = useState(tempMovieData);
     const [watched, setWatched] = useState(tempWatchedData);
     const [isLoding, setIsLoding] = useState(false);
+    const [msgerror, setMsgerror] = useState('');
 useEffect(function(){
   async function fetchData(){
+    try {
     setIsLoding(true);
     const response = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${Key}&s=${Query}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
     const data = await response.json();
+
+    if (data.Response === 'False') {
+      throw new Error('Movies not Found');
+    }
+
     setMovies(data.Search);
+    console.log(data);
+  }catch (error) {
+
+    // Handle the error
+    console.error("Error fetching data:", error.message);
+    // throw new Error('failed to fetch Movies');
+    setMsgerror(error.message);
+    // You can also throw the error again if needed
+    // throw error;
+  }finally{
     setIsLoding(false);
   }
+  
+  }
   fetchData();
-
 },[])
 
     
@@ -89,7 +110,10 @@ useEffect(function(){
 
   <Main >
     <Box>
-    {isLoding? <Loding/> : <MovieList movies={movies}/> }
+    {/* {isLoding? <> <Loding/> <Errormsg errmsg={msgerror}/> </> : <MovieList movies={movies}/> } */}
+    {!isLoding && !msgerror &&  <MovieList movies={movies}/> }
+    {isLoding && <Loding/> }
+    {msgerror && <Errormsg errmsg={msgerror}/> }
     </Box>
 
     <Box>
@@ -109,7 +133,11 @@ function Loding(){
     <p className="loader">Loding...</p>
   )
 }
-
+function Errormsg({errmsg}){
+  return(
+    <p className="loader">⛔ {errmsg} </p>
+  )
+}
 
 function NavBar({children}){
  
@@ -262,4 +290,3 @@ function WatchMovie({movie}){
             </div>
           </li>
 )}
-
